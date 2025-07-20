@@ -1,0 +1,1 @@
+export function report() { console.log('Gerando relatório...'); }

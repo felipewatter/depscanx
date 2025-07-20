@@ -1,0 +1,1 @@
+export function scan() { console.log('Escaneando pacotes...'); }

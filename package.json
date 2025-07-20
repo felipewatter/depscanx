@@ -1,0 +1,16 @@
+{
+  "name": "depscanx",
+  "version": "1.0.0",
+  "description": "CLI para escanear vulnerabilidades em dependências.",
+  "main": "bin/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node bin/cli.js"
+  },
+  "author": "Felipe Silva",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

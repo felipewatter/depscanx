@@ -1,0 +1,1 @@
+console.log('Iniciando análise com DepScanX...');
