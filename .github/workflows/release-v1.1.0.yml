@@ -1,0 +1,45 @@
+name: Publish DepScanX v1.1.0
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release-v1.1.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Create verified v1.1.0 release
+    if: github.repository == 'felipewatter/depscanx'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release notes
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Verify the validated commit is on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_TARGET: 643c2f0940ec60069c1aab8db00a1abd5a30e33e
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$TAG_TARGET" HEAD
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_TARGET: 643c2f0940ec60069c1aab8db00a1abd5a30e33e
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release v1.1.0 already exists; refusing to replace it."
+            exit 0
+          fi
+          gh release create v1.1.0 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$TAG_TARGET" \
+            --title "DepScanX v1.1.0 — Functional Dependency Security Scanner" \
+            --notes-file .github/release-notes/v1.1.0.md \
+            --latest
