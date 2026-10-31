@@ -16,5 +16,5 @@
     "start": "node bin/cli.js",
     "prepack": "npm run build"
   },
-  "devDependencies": {"@types/node": "^22.15.0", "typescript": "~5.9.3"}
+  "devDependencies": {"@types/node": "^26.6.6", "typescript": "~5.9.3"}
 }
