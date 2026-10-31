@@ -1,0 +1,10 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const {parseAudit,parseOutdated,shouldFail,escapeTerminal} = require('../bin/analyzer.js');
+const sample = JSON.stringify({vulnerabilities:{a:{severity:'high',isDirect:true,via:[{title:'Prototype issue'},'indirect'],range:'<2',fixAvailable:false},b:{severity:'low',isDirect:false,via:[],range:'*',fixAvailable:{name:'b',version:'3',isSemVerMajor:true}}},metadata:{vulnerabilities:{high:1,low:1,total:2}}});
+test('npm audit vulnerabilities normalize and sort',()=>{let x=parseAudit(sample);assert.equal(x.packages.length,2);assert.equal(x.packages[0].name,'a');assert.equal(x.counts.high,1);assert.equal(x.counts.total,2);assert.deepEqual(x.packages[0].via,['Prototype issue','indirect']);assert.deepEqual(x.packages[1].fixAvailable,{name:'b',version:'3',isSemVerMajor:true})});
+test('severity threshold is inclusive',()=>{let x=parseAudit(sample);assert.equal(shouldFail(x,'critical'),false);assert.equal(shouldFail(x,'high'),true);assert.equal(shouldFail(x,'moderate'),true)});
+test('invalid, legacy and error-shaped payloads are rejected',()=>{for(const p of ['broken','{}',JSON.stringify({error:{summary:'registry down'}}),JSON.stringify({advisories:{}})])assert.throws(()=>parseAudit(p))});
+test('npm outdated empty and populated JSON',()=>{assert.deepEqual(parseOutdated(''),[]);assert.deepEqual(parseOutdated('{}'),[]);const x=parseOutdated(JSON.stringify({foo:{current:'1.0',wanted:'1.2',latest:'2',type:'dependencies'}}));assert.equal(x[0].latest,'2')});
+test('npm outdated malformed shape rejected',()=>{assert.throws(()=>parseOutdated('[]'));assert.throws(()=>parseOutdated('not-json'))});
+test('terminal output neutralizes ANSI and control bytes',()=>assert.equal(escapeTerminal('safe\u001b[31m\n'),'safe?[31m?'));

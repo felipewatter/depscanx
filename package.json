@@ -1,16 +1,20 @@
 {
   "name": "depscanx",
-  "version": "1.0.0",
-  "description": "CLI para escanear vulnerabilidades em dependências.",
-  "main": "bin/cli.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "node bin/cli.js"
-  },
-  "author": "Felipe Silva",
+  "version": "1.1.0",
+  "description": "Auditoria de dependencias Node.js com relatórios para CI",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.0.0"
-  }
+  "author": "Felipe Silva",
+  "type": "commonjs",
+  "engines": {"node": ">=22"},
+  "bin": {"dep-scanx": "./bin/cli.js"},
+  "main": "./bin/index.js",
+  "files": ["bin", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "start": "node bin/cli.js",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {"@types/node": "^22.15.0", "typescript": "~5.9.3"}
 }
