@@ -40,7 +40,7 @@ export function parseArgs(args: readonly string[]): CliOptions | 'help' | 'versi
       options.failOn = value as Severity;
     }
     if (a === '--timeout') {
-      if (!/^[1-9]\\d*$/.test(value)) throw new Error('Timeout inválido');
+      if (!/^[1-9]\d*$/.test(value)) throw new Error('Timeout inválido');
       const seconds = Number(value);
       if (!Number.isSafeInteger(seconds) || seconds < 5 || seconds > 300) throw new Error('Timeout deve ficar entre 5 e 300 segundos');
       options.timeoutMs = seconds * 1000;
