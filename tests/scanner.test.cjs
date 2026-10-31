@@ -1,0 +1,13 @@
+const {test} = require('node:test');
+const assert=require('node:assert/strict');
+const {mkdtempSync,writeFileSync,rmSync,symlinkSync}=require('node:fs');
+const {tmpdir}=require('node:os');
+const {join}=require('node:path');
+const {scanProject,validateProject}=require('../bin/scanner.js');
+const {report}=require('../bin/reporter.js');
+const fixture=()=>{const dir=mkdtempSync(join(tmpdir(),'depscanx-'));writeFileSync(join(dir,'package.json'),'{}');writeFileSync(join(dir,'package-lock.json'),'{}');return dir;};
+test('scan parses audit exit 1 as findings and optional outdated report',async()=>{let dir=fixture(),calls=[];try{const fake=async(args,cwd)=>{calls.push(args[0]);assert.equal(cwd,dir);return args[0]==='audit'?{code:1,stdout:JSON.stringify({vulnerabilities:{lib:{severity:'critical',range:'<1',via:['demo'],isDirect:true,fixAvailable:false}}}),stderr:''}:{code:1,stdout:JSON.stringify({lib:{current:'1',wanted:'1.1',latest:'2'}}),stderr:''}};const r=await scanProject(dir,{outdated:true,timeoutMs:6000},fake);assert.equal(r.audit.counts.critical,1);assert.equal(r.outdated?.length,1);assert.deepEqual(calls,['audit','outdated']);assert.match(report(r,'text','high'),/CRITICAL/);assert.equal(JSON.parse(report(r,'json','high')).schemaVersion,1)}finally{rmSync(dir,{recursive:true,force:true})}});
+test('outdated operational issue creates warning but scan remains valid',async()=>{const dir=fixture();try{let r=await scanProject(dir,{outdated:true,timeoutMs:6000},async args=>args[0]==='audit'?{code:0,stdout:'{"vulnerabilities":{}}',stderr:''}:{code:2,stdout:'',stderr:'registry down'});assert.equal(r.audit.counts.total,0);assert.equal(r.outdated,null);assert.equal(r.warnings.length,1)}finally{rmSync(dir,{recursive:true,force:true})}});
+test('audit infra failures fail closed',async()=>{const dir=fixture();try{await assert.rejects(()=>scanProject(dir,{outdated:false,timeoutMs:6000},async()=>({code:2,stdout:'{}',stderr:'network issue'})),/audit falhou/);await assert.rejects(()=>scanProject(dir,{outdated:false,timeoutMs:6000},async()=>({code:1,stdout:'{}',stderr:''})),/não forneceu/)}finally{rmSync(dir,{recursive:true,force:true})}});
+test('missing lockfile rejected without invoking npm',async()=>{const dir=fixture();try{rmSync(join(dir,'package-lock.json'));await assert.rejects(()=>validateProject(dir),/obrigatório/)}finally{rmSync(dir,{recursive:true,force:true})}});
+test('manifest symlink rejected',async()=>{const dir=fixture();try{rmSync(join(dir,'package-lock.json'));symlinkSync(join(dir,'package.json'),join(dir,'package-lock.json'));await assert.rejects(()=>validateProject(dir),/obrigatório/)}finally{rmSync(dir,{recursive:true,force:true})}});
